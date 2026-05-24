@@ -1,10 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using LibraryManagement.Core.Interfaces.Repositories;
+using LibraryManagement.Core.Models;
+using LibraryManagement.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
-namespace LibraryManagement.Infrastruture.Repositories
+namespace LibraryManagement.Infrastructure.Repositories;
+
+public class PaymentRepository : GenericRepository<Payment>, IPaymentRepository
 {
-    internal class PaymentRepository
-    {
-    }
+    public PaymentRepository(AppDbContext context) : base(context) { }
+
+    public async Task<IEnumerable<Payment>> GetPaymentsByUser(int userId) =>
+        await _context.Payments
+            .Include(p => p.User)
+            .Where(p => p.UserId == userId)
+            .ToListAsync();
 }

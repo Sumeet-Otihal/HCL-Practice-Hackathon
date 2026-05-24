@@ -1,10 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using LibraryManagement.Core.Enums;
+using LibraryManagement.Core.Interfaces.Repositories;
+using LibraryManagement.Core.Models;
+using LibraryManagement.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
-namespace LibraryManagement.Infrastruture.Repositories
+namespace LibraryManagement.Infrastructure.Repositories;
+
+public class BookRequestRepository : GenericRepository<BookRequest>, IBookRequestRepository
 {
-    internal class BookRequestRepository
-    {
-    }
+    public BookRequestRepository(AppDbContext context) : base(context) { }
+
+    public async Task<IEnumerable<BookRequest>> GetRequestsByStatus(RequestStatus status) =>
+        await _context.BookRequests
+            .Include(r => r.User)
+            .Where(r => r.Status == status)
+            .ToListAsync();
+
+    public async Task<IEnumerable<BookRequest>> GetRequestsByUser(int userId) =>
+        await _context.BookRequests
+            .Where(r => r.UserId == userId)
+            .ToListAsync();
 }

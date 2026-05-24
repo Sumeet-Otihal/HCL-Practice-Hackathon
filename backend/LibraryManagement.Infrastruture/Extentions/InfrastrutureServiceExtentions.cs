@@ -1,10 +1,30 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using LibraryManagement.Core.Interfaces.Repositories;
+using LibraryManagement.Infrastructure.Data;
+using LibraryManagement.Infrastructure.Repositories;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace LibraryManagement.Infrastruture.Extentions
+namespace LibraryManagement.Infrastructure.Extensions;
+
+public static class InfrastructureServiceExtensions
 {
-    internal class InfrastrutureServiceExtentions
+    public static IServiceCollection AddInfrastructure(
+        this IServiceCollection services,
+        IConfiguration configuration)
     {
+        // Database
+        services.AddDbContext<AppDbContext>(options =>
+            options.UseSqlServer(
+                configuration.GetConnectionString("DefaultConnection")));
+
+        // Repositories
+        services.AddScoped<IBookRepository, BookRepository>();
+        services.AddScoped<IBorrowRepository, BorrowRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IPaymentRepository, PaymentRepository>();
+        services.AddScoped<IBookRequestRepository, BookRequestRepository>();
+
+        return services;
     }
 }
