@@ -1,10 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using FluentValidation;
+using LibraryManagement.Core.DTOs;
 
-namespace LibraryManagement.Services.Validators
+namespace LibraryManagement.Services.Validators;
+
+public class LoginValidator : AbstractValidator<LoginDto>
 {
-    internal class LoginValidator
+    public LoginValidator()
     {
+        RuleFor(x => x.Email)
+            .NotEmpty().WithMessage("Email is required")
+            .EmailAddress().WithMessage("Invalid email format");
+
+        RuleFor(x => x.Password)
+            .NotEmpty().WithMessage("Password is required");
     }
 }

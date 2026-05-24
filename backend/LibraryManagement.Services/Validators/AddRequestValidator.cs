@@ -1,10 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using FluentValidation;
+using LibraryManagement.Core.DTOs;
 
-namespace LibraryManagement.Services.Validators
+namespace LibraryManagement.Services.Validators;
+
+public class AddRequestValidator : AbstractValidator<AddRequestDto>
 {
-    internal class AddRequestValidator
+    public AddRequestValidator()
     {
+        RuleFor(x => x.Title)
+            .NotEmpty().WithMessage("Book title is required");
+
+        RuleFor(x => x.Author)
+            .NotEmpty().WithMessage("Author name is required");
     }
 }
