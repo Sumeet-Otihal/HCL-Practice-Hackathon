@@ -1,11 +1,8 @@
 using System;
 
-namespace LibraryManagement.Core.Exceptions
+namespace LibraryManagement.Core.Exceptions;
+
+public class UnauthorizedException : Exception
 {
-    public class UnauthorizedException : Exception
-    {
-        public UnauthorizedException(string message) : base(message)
-        {
-        }
-    }
+    public UnauthorizedException(string message) : base(message) { }
 }
