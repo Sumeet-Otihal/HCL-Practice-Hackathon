@@ -1,17 +1,19 @@
-﻿using LibraryManagement.Core.Interfaces.Repositories;
+using LibraryManagement.Core.Interfaces.Repositories;
 using LibraryManagement.Core.Models;
-using LibraryManagement.Infrastructure.Data;
+using LibraryManagement.Infrastruture.Data;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
-namespace LibraryManagement.Infrastructure.Repositories;
+namespace LibraryManagement.Infrastruture.Repositories;
 
 public class PaymentRepository : GenericRepository<Payment>, IPaymentRepository
 {
     public PaymentRepository(AppDbContext context) : base(context) { }
 
-    public async Task<IEnumerable<Payment>> GetPaymentsByUser(int userId) =>
+    public async Task<IEnumerable<Payment>> GetPaymentsByUserAsync(int userId) =>
         await _context.Payments
-            .Include(p => p.User)
             .Where(p => p.UserId == userId)
             .ToListAsync();
 }

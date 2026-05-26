@@ -1,9 +1,8 @@
-﻿using LibraryManagement.Core.Enums;
+using LibraryManagement.Core.Enums;
 using LibraryManagement.Core.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Reflection.Emit;
 
-namespace LibraryManagement.Infrastructure.Data;
+namespace LibraryManagement.Infrastruture.Data;
 
 public class AppDbContext : DbContext
 {

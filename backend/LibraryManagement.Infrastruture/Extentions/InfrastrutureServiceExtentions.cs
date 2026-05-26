@@ -1,15 +1,15 @@
-﻿using LibraryManagement.Core.Interfaces.Repositories;
-using LibraryManagement.Infrastructure.Data;
-using LibraryManagement.Infrastructure.Repositories;
+using LibraryManagement.Core.Interfaces.Repositories;
+using LibraryManagement.Infrastruture.Data;
+using LibraryManagement.Infrastruture.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace LibraryManagement.Infrastructure.Extensions;
+namespace LibraryManagement.Infrastruture.Extentions;
 
-public static class InfrastructureServiceExtensions
+public static class InfrastrutureServiceExtentions
 {
-    public static IServiceCollection AddInfrastructure(
+    public static IServiceCollection AddInfrastruture(
         this IServiceCollection services,
         IConfiguration configuration)
     {
@@ -19,6 +19,7 @@ public static class InfrastructureServiceExtensions
                 configuration.GetConnectionString("DefaultConnection")));
 
         // Repositories
+        services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
         services.AddScoped<IBookRepository, BookRepository>();
         services.AddScoped<IBorrowRepository, BorrowRepository>();
         services.AddScoped<IUserRepository, UserRepository>();

@@ -1,8 +1,10 @@
-﻿using LibraryManagement.Core.Interfaces.Repositories;
-using LibraryManagement.Infrastructure.Data;
+using LibraryManagement.Core.Interfaces.Repositories;
+using LibraryManagement.Infrastruture.Data;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
-namespace LibraryManagement.Infrastructure.Repositories;
+namespace LibraryManagement.Infrastruture.Repositories;
 
 public class GenericRepository<T> : IGenericRepository<T> where T : class
 {
@@ -13,13 +15,13 @@ public class GenericRepository<T> : IGenericRepository<T> where T : class
         _context = context;
     }
 
-    public async Task<IEnumerable<T>> GetAll() =>
+    public async Task<IEnumerable<T>> GetAllAsync() =>
         await _context.Set<T>().ToListAsync();
 
-    public async Task<T?> GetById(int id) =>
+    public async Task<T?> GetByIdAsync(int id) =>
         await _context.Set<T>().FindAsync(id);
 
-    public async Task Add(T entity) =>
+    public async Task AddAsync(T entity) =>
         await _context.Set<T>().AddAsync(entity);
 
     public void Update(T entity) =>
@@ -28,6 +30,6 @@ public class GenericRepository<T> : IGenericRepository<T> where T : class
     public void Delete(T entity) =>
         _context.Set<T>().Remove(entity);
 
-    public async Task SaveChanges() =>
-        await _context.SaveChangesAsync();
+    public async Task<bool> SaveChangesAsync() =>
+        await _context.SaveChangesAsync() > 0;
 }

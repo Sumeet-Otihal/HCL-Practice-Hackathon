@@ -1,38 +1,34 @@
-﻿using LibraryManagement.Core.Interfaces.Repositories;
+using LibraryManagement.Core.Interfaces.Repositories;
 using LibraryManagement.Core.Models;
-using LibraryManagement.Infrastructure.Data;
+using LibraryManagement.Infrastruture.Data;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
-namespace LibraryManagement.Infrastructure.Repositories;
+namespace LibraryManagement.Infrastruture.Repositories;
 
 public class BorrowRepository : GenericRepository<BorrowedBook>, IBorrowRepository
 {
     public BorrowRepository(AppDbContext context) : base(context) { }
 
-    public async Task<IEnumerable<BorrowedBook>> GetAllBorrowedBooks() =>
+    public async Task<IEnumerable<BorrowedBook>> GetBorrowsByUserAsync(int userId) =>
         await _context.BorrowedBooks
-            .Include(b => b.Book)
-            .Include(b => b.User)
-            .ToListAsync();
-
-    public async Task<IEnumerable<BorrowedBook>> GetBorrowedByUser(int userId) =>
-        await _context.BorrowedBooks
-            .Include(b => b.Book)
-            .Include(b => b.User)
             .Where(b => b.UserId == userId)
             .ToListAsync();
 
-    public async Task<IEnumerable<BorrowedBook>> GetActiveBorrows() =>
+    public async Task<IEnumerable<BorrowedBook>> GetActiveBorrowsAsync() =>
         await _context.BorrowedBooks
-            .Include(b => b.Book)
-            .Include(b => b.User)
             .Where(b => !b.IsReturned)
             .ToListAsync();
 
-    public async Task<IEnumerable<BorrowedBook>> GetOverdueBorrows() =>
+    public async Task<IEnumerable<BorrowedBook>> GetOverdueBorrowsAsync() =>
         await _context.BorrowedBooks
-            .Include(b => b.Book)
-            .Include(b => b.User)
             .Where(b => !b.IsReturned && b.ReturnDate < DateTime.UtcNow)
             .ToListAsync();
+
+    public async Task<BorrowedBook?> GetActiveBorrowByBookIdAsync(int bookId) =>
+        await _context.BorrowedBooks
+            .FirstOrDefaultAsync(b => b.BookId == bookId && !b.IsReturned);
 }

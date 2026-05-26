@@ -1,22 +1,28 @@
-﻿using BCrypt.Net;
+using BCrypt.Net;
 using LibraryManagement.Core.Enums;
 using LibraryManagement.Core.Models;
-using LibraryManagement.Infrastructure.Data;
+using LibraryManagement.Infrastruture.Data;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
-namespace LibraryManagement.Infrastructure.Data;
+namespace LibraryManagement.Infrastruture.Data;
 
 public static class DbInitializer
 {
     public static async Task SeedAsync(AppDbContext context)
     {
-        // Run pending migrations automatically
-        await context.Database.MigrateAsync();
-
+        Console.WriteLine("Seeding database...");
+        
         // Guard: skip if any users already exist
-        if (await context.Users.AnyAsync()) return;
+        if (await context.Users.AnyAsync()) 
+        {
+            Console.WriteLine("Database already seeded.");
+            return;
+        }
 
-        // ── Seed Users ────────────────────────────────────────────────
+        Console.WriteLine("Creating initial users...");
         var users = new List<User>
         {
             new()
@@ -24,7 +30,7 @@ public static class DbInitializer
                 Name              = "Admin Librarian",
                 Email             = "librarian@library.com",
                 PasswordHash      = BCrypt.Net.BCrypt.HashPassword("Admin@1234"),
-                Role              = UserRole.Librarian,
+                Role              = Role.Librarian,
                 IsActive          = true,
                 PhoneNo           = "9999999999",
                 LibraryCardExpiry = DateTime.UtcNow.AddYears(5),
@@ -36,7 +42,7 @@ public static class DbInitializer
                 Name              = "John Reader",
                 Email             = "reader@library.com",
                 PasswordHash      = BCrypt.Net.BCrypt.HashPassword("Reader@1234"),
-                Role              = UserRole.Reader,
+                Role              = Role.Reader,
                 IsActive          = true,
                 PhoneNo           = "8888888888",
                 LibraryCardExpiry = DateTime.UtcNow.AddYears(1),
@@ -123,5 +129,6 @@ public static class DbInitializer
         await context.Users.AddRangeAsync(users);
         await context.Books.AddRangeAsync(books);
         await context.SaveChangesAsync();
+        Console.WriteLine("Seeding completed successfully.");
     }
 }
