@@ -1,113 +1,132 @@
-﻿using AutoMapper;
-using LibraryManagement.Core.DTOs;
+using AutoMapper;
+using BCrypt.Net;
+using LibraryManagement.Core.DTOs.User;
+using LibraryManagement.Core.Enums;
 using LibraryManagement.Core.Exceptions;
 using LibraryManagement.Core.Interfaces.Repositories;
 using LibraryManagement.Core.Interfaces.Services;
 using LibraryManagement.Core.Models;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace LibraryManagement.Services.Services;
 
-public class BorrowService : IBorrowService
+public class UserService : IUserService
 {
-    private readonly IBorrowRepository _borrowRepo;
-    private readonly IBookRepository _bookRepo;
     private readonly IUserRepository _userRepo;
+    private readonly IJwtTokenService _jwtService;
     private readonly IMapper _mapper;
 
-    public BorrowService(
-        IBorrowRepository borrowRepo,
-        IBookRepository bookRepo,
+    public UserService(
         IUserRepository userRepo,
+        IJwtTokenService jwtService,
         IMapper mapper)
     {
-        _borrowRepo = borrowRepo;
-        _bookRepo = bookRepo;
         _userRepo = userRepo;
+        _jwtService = jwtService;
         _mapper = mapper;
     }
 
-    public async Task<BorrowResponseDto> BorrowBook(BorrowBookDto dto)
+    public async Task<AuthResponseDto> LoginAsync(LoginDto dto)
     {
-        // 1. Validate book exists
-        var book = await _bookRepo.GetById(dto.BookId)
-            ?? throw new NotFoundException($"Book with ID {dto.BookId} not found");
+        var user = await _userRepo.GetByEmailAsync(dto.Email)
+            ?? throw new UnauthorizedException("Invalid email or password");
 
-        // 2. Validate availability
-        if (!book.IsAvailable || book.NoOfCopies <= 0)
-            throw new ConflictException("This book is currently unavailable");
+        if (!BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
+            throw new UnauthorizedException("Invalid email or password");
 
-        // 3. Validate user exists
-        var user = await _userRepo.GetById(dto.UserId)
-            ?? throw new NotFoundException($"User with ID {dto.UserId} not found");
+        var token = _jwtService.GenerateToken(user);
 
-        // 4. Validate library card
-        if (user.LibraryCardExpiry <= DateTime.UtcNow)
-            throw new CardExpiredException("Reader's library card has expired");
-
-        // 5. Create borrow record
-        var borrow = _mapper.Map<BorrowedBook>(dto);
-
-        // 6. Decrement stock; mark unavailable if last copy
-        book.NoOfCopies--;
-        if (book.NoOfCopies == 0) book.IsAvailable = false;
-        book.UpdatedAt = DateTime.UtcNow;
-
-        _bookRepo.Update(book);
-        await _borrowRepo.Add(borrow);
-        await _borrowRepo.SaveChanges();
-
-        // 7. Reload with navigation properties for the response
-        var all = await _borrowRepo.GetBorrowedByUser(dto.UserId);
-        var created = all.OrderByDescending(b => b.IssuingDate).First();
-        return _mapper.Map<BorrowResponseDto>(created);
-    }
-
-    public async Task<BorrowResponseDto> ReturnBook(int borrowId)
-    {
-        var borrow = await _borrowRepo.GetById(borrowId)
-            ?? throw new NotFoundException($"Borrow record with ID {borrowId} not found");
-
-        if (borrow.IsReturned)
-            throw new ConflictException("This book has already been returned");
-
-        // Mark returned
-        borrow.IsReturned = true;
-        borrow.ReturnDate = DateTime.UtcNow;
-
-        // Restore stock
-        var book = await _bookRepo.GetById(borrow.BookId);
-        if (book != null)
+        return new AuthResponseDto
         {
-            book.NoOfCopies++;
-            book.IsAvailable = true;
-            book.UpdatedAt = DateTime.UtcNow;
-            _bookRepo.Update(book);
-        }
-
-        _borrowRepo.Update(borrow);
-        await _borrowRepo.SaveChanges();
-
-        // Reload with navigation properties for the response
-        var all = await _borrowRepo.GetBorrowedByUser(borrow.UserId);
-        var updated = all.First(b => b.Id == borrowId);
-        return _mapper.Map<BorrowResponseDto>(updated);
+            Token = token,
+            UserId = user.Id,
+            Name = user.Name,
+            Role = user.Role.ToString(),
+            ExpiresAt = DateTime.UtcNow.AddDays(7) // Example matching JWT expiry
+        };
     }
 
-    public async Task<IEnumerable<BorrowResponseDto>> GetAllBorrows()
+    public async Task<AuthResponseDto> RegisterAsync(RegisterDto dto)
     {
-        var borrows = await _borrowRepo.GetAllBorrowedBooks();
-        return _mapper.Map<IEnumerable<BorrowResponseDto>>(borrows);
+        var existing = await _userRepo.GetByEmailAsync(dto.Email);
+        if (existing != null)
+            throw new ConflictException("Email already registered");
+
+        var user = _mapper.Map<User>(dto);
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
+        user.Role = Role.Reader; // Default role
+        user.IsActive = true;
+        user.CreatedAt = DateTime.UtcNow;
+        user.UpdatedAt = DateTime.UtcNow;
+
+        await _userRepo.AddAsync(user);
+        await _userRepo.SaveChangesAsync();
+
+        var token = _jwtService.GenerateToken(user);
+
+        return new AuthResponseDto
+        {
+            Token = token,
+            UserId = user.Id,
+            Name = user.Name,
+            Role = user.Role.ToString(),
+            ExpiresAt = DateTime.UtcNow.AddDays(7)
+        };
     }
 
-    public async Task<IEnumerable<BorrowResponseDto>> GetBorrowsByUser(int userId)
+    public async Task<UserResponseDto> GetUserByIdAsync(int id)
     {
-        var borrows = await _borrowRepo.GetBorrowedByUser(userId);
-        return _mapper.Map<IEnumerable<BorrowResponseDto>>(borrows);
+        var user = await _userRepo.GetByIdAsync(id)
+            ?? throw new NotFoundException("User not found");
+        return _mapper.Map<UserResponseDto>(user);
     }
 
-    public async Task<IEnumerable<BorrowResponseDto>> GetOverdueBorrows()
+    public async Task<IEnumerable<UserResponseDto>> GetAllUsersAsync()
     {
-        var borrows = await _borrowRepo.GetOverdueBorrows();
-        return _mapper.Map<IEnumerable<BorrowResponseDto>>(borrows);
+        var users = await _userRepo.GetAllAsync();
+        return _mapper.Map<IEnumerable<UserResponseDto>>(users);
+    }
+
+    public async Task<CardValidityResponseDto> CheckCardValidityAsync(int userId)
+    {
+        var user = await _userRepo.GetByIdAsync(userId)
+            ?? throw new NotFoundException("User not found");
+
+        var today = DateTime.UtcNow;
+        var remaining = (user.LibraryCardExpiry - today).Days;
+
+        return new CardValidityResponseDto
+        {
+            UserId = userId,
+            Name = user.Name,
+            LibraryCardExpiry = user.LibraryCardExpiry,
+            IsValid = user.LibraryCardExpiry > today,
+            DaysRemaining = remaining
+        };
+    }
+
+    public async Task<IEnumerable<UserResponseDto>> GetExpiringCardsAsync(int days)
+    {
+        var users = await _userRepo.GetUsersWithExpiringCardsAsync(days);
+        return _mapper.Map<IEnumerable<UserResponseDto>>(users);
+    }
+
+    public async Task<UserResponseDto> UpdateUserAsync(int id, UpdateUserDto dto)
+    {
+        var user = await _userRepo.GetByIdAsync(id)
+            ?? throw new NotFoundException("User not found");
+
+        if (!string.IsNullOrEmpty(dto.Name)) user.Name = dto.Name;
+        if (!string.IsNullOrEmpty(dto.PhoneNo)) user.PhoneNo = dto.PhoneNo;
+        if (dto.LibraryCardExpiry != default) user.LibraryCardExpiry = dto.LibraryCardExpiry;
+
+        user.UpdatedAt = DateTime.UtcNow;
+
+        _userRepo.Update(user);
+        await _userRepo.SaveChangesAsync();
+
+        return _mapper.Map<UserResponseDto>(user);
     }
 }

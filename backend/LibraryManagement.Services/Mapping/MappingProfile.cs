@@ -1,8 +1,10 @@
-﻿using AutoMapper;
-using LibraryManagement.Core.DTOs;
-using LibraryManagement.Core.Enums;
+using AutoMapper;
+using LibraryManagement.Core.DTOs.Book;
+using LibraryManagement.Core.DTOs.Borrow;
+using LibraryManagement.Core.DTOs.Payment;
+using LibraryManagement.Core.DTOs.Request;
+using LibraryManagement.Core.DTOs.User;
 using LibraryManagement.Core.Models;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace LibraryManagement.Services.Mapping;
 
@@ -12,47 +14,33 @@ public class MappingProfile : Profile
     {
         // ── Book ──────────────────────────────────────────────────────
         CreateMap<Book, BookResponseDto>();
-
-        CreateMap<AddBookDto, Book>()
-            .ForMember(dest => dest.IsAvailable, opt => opt.MapFrom(_ => true))
-            .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(_ => DateTime.UtcNow))
-            .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(_ => DateTime.UtcNow));
-
-        // UpdateBookDto is intentionally NOT used for mapping —
-        // UpdateBook() in BookService applies fields manually to avoid
-        // overwriting non-nullable fields with null.
+        CreateMap<Book, BookSummaryDto>();
+        CreateMap<AddBookDto, Book>();
+        CreateMap<UpdateBookDto, Book>()
+            .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
 
         // ── User ──────────────────────────────────────────────────────
         CreateMap<User, UserResponseDto>();
+        CreateMap<RegisterDto, User>();
+        CreateMap<UpdateUserDto, User>()
+            .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
 
-        CreateMap<RegisterDto, User>()
-            .ForMember(dest => dest.PasswordHash, opt => opt.Ignore())
-            .ForMember(dest => dest.IsActive, opt => opt.MapFrom(_ => true))
-            .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(_ => DateTime.UtcNow))
-            .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(_ => DateTime.UtcNow));
-
-        // ── BorrowedBook ──────────────────────────────────────────────
+        // ── Borrow ────────────────────────────────────────────────────
         CreateMap<BorrowedBook, BorrowResponseDto>()
-            .ForMember(dest => dest.BookTitle,
-                opt => opt.MapFrom(src => src.Book.Title))
-            .ForMember(dest => dest.UserName,
-                opt => opt.MapFrom(src => src.User.Name));
-
-        CreateMap<BorrowBookDto, BorrowedBook>()
-            .ForMember(dest => dest.IssuingDate, opt => opt.MapFrom(_ => DateTime.UtcNow))
-            .ForMember(dest => dest.IsReturned, opt => opt.MapFrom(_ => false));
+            .ForMember(dest => dest.BookTitle, opt => opt.MapFrom(src => src.Book != null ? src.Book.Title : string.Empty))
+            .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.User != null ? src.User.Name : string.Empty));
+        
+        CreateMap<BorrowBookDto, BorrowedBook>();
 
         // ── Payment ───────────────────────────────────────────────────
-        CreateMap<Payment, PaymentResponseDto>();
+        CreateMap<Payment, PaymentResponseDto>()
+            .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.User != null ? src.User.Name : string.Empty));
+        
+        CreateMap<AddPaymentDto, Payment>();
 
-        CreateMap<AddPaymentDto, Payment>()
-            .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(_ => DateTime.UtcNow));
-
-        // ── BookRequest ───────────────────────────────────────────────
+        // ── Request ───────────────────────────────────────────────────
         CreateMap<BookRequest, RequestResponseDto>();
-
-        CreateMap<AddRequestDto, BookRequest>()
-            .ForMember(dest => dest.Status, opt => opt.MapFrom(_ => RequestStatus.Pending))
-            .ForMember(dest => dest.RequestedAt, opt => opt.MapFrom(_ => DateTime.UtcNow));
+        
+        CreateMap<AddRequestDto, BookRequest>();
     }
 }

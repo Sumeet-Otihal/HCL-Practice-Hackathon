@@ -1,10 +1,13 @@
-﻿using AutoMapper;
-using LibraryManagement.Core.DTOs;
+using AutoMapper;
+using LibraryManagement.Core.DTOs.Request;
 using LibraryManagement.Core.Enums;
 using LibraryManagement.Core.Exceptions;
 using LibraryManagement.Core.Interfaces.Repositories;
 using LibraryManagement.Core.Interfaces.Services;
 using LibraryManagement.Core.Models;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace LibraryManagement.Services.Services;
 
@@ -24,44 +27,48 @@ public class RequestService : IRequestService
         _mapper = mapper;
     }
 
-    public async Task<RequestResponseDto> AddRequest(AddRequestDto dto, int userId)
+    public async Task<RequestResponseDto> AddRequestAsync(int userId, AddRequestDto dto)
     {
-        _ = await _userRepo.GetById(userId)
-            ?? throw new NotFoundException($"User with ID {userId} not found");
+        var user = await _userRepo.GetByIdAsync(userId)
+            ?? throw new NotFoundException("User not found");
 
-        var request = _mapper.Map<BookRequest>(dto);
-        request.UserId = userId;   // always from JWT, never from request body
+        var request = new BookRequest
+        {
+            UserId = userId,
+            Title = dto.Title,
+            Author = dto.Author,
+            Genre = dto.Genre,
+            Status = RequestStatus.Pending,
+            RequestedAt = DateTime.UtcNow
+        };
 
-        await _requestRepo.Add(request);
-        await _requestRepo.SaveChanges();
+        await _requestRepo.AddAsync(request);
+        await _requestRepo.SaveChangesAsync();
+
         return _mapper.Map<RequestResponseDto>(request);
     }
 
-    public async Task<IEnumerable<RequestResponseDto>> GetAllRequests()
+    public async Task<IEnumerable<RequestResponseDto>> GetAllRequestsAsync()
     {
-        var requests = await _requestRepo.GetAll();
+        var requests = await _requestRepo.GetAllAsync();
         return _mapper.Map<IEnumerable<RequestResponseDto>>(requests);
     }
 
-    public async Task<RequestResponseDto> UpdateRequestStatus(
-        int requestId, RequestStatus status)
+    public async Task<IEnumerable<RequestResponseDto>> GetRequestsByUserAsync(int userId)
     {
-        // Librarians can only set Fulfilled or Rejected — never revert to Pending
-        if (status == RequestStatus.Pending)
-            throw new ConflictException("Status cannot be set back to Pending");
+        var requests = await _requestRepo.GetRequestsByUserAsync(userId);
+        return _mapper.Map<IEnumerable<RequestResponseDto>>(requests);
+    }
 
-        var request = await _requestRepo.GetById(requestId)
-            ?? throw new NotFoundException($"Request with ID {requestId} not found");
+    public async Task<RequestResponseDto> UpdateRequestStatusAsync(int id, UpdateRequestStatusDto dto)
+    {
+        var request = await _requestRepo.GetByIdAsync(id)
+            ?? throw new NotFoundException("Request not found");
 
-        request.Status = status;
+        request.Status = dto.Status;
         _requestRepo.Update(request);
-        await _requestRepo.SaveChanges();
-        return _mapper.Map<RequestResponseDto>(request);
-    }
+        await _requestRepo.SaveChangesAsync();
 
-    public async Task<IEnumerable<RequestResponseDto>> GetRequestsByUser(int userId)
-    {
-        var requests = await _requestRepo.GetRequestsByUser(userId);
-        return _mapper.Map<IEnumerable<RequestResponseDto>>(requests);
+        return _mapper.Map<RequestResponseDto>(request);
     }
 }

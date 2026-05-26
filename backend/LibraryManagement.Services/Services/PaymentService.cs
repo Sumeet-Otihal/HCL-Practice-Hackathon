@@ -1,9 +1,12 @@
-﻿using AutoMapper;
-using LibraryManagement.Core.DTOs;
+using AutoMapper;
+using LibraryManagement.Core.DTOs.Payment;
 using LibraryManagement.Core.Exceptions;
 using LibraryManagement.Core.Interfaces.Repositories;
 using LibraryManagement.Core.Interfaces.Services;
 using LibraryManagement.Core.Models;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace LibraryManagement.Services.Services;
 
@@ -23,23 +26,28 @@ public class PaymentService : IPaymentService
         _mapper = mapper;
     }
 
-    public async Task<PaymentResponseDto> AddPayment(AddPaymentDto dto)
+    public async Task<PaymentResponseDto> AddPaymentAsync(AddPaymentDto dto)
     {
-        _ = await _userRepo.GetById(dto.UserId)
-            ?? throw new NotFoundException($"User with ID {dto.UserId} not found");
+        var user = await _userRepo.GetByIdAsync(dto.UserId)
+            ?? throw new NotFoundException("User not found");
 
-        var payment = _mapper.Map<Payment>(dto);
-        await _paymentRepo.Add(payment);
-        await _paymentRepo.SaveChanges();
+        var payment = new Payment
+        {
+            UserId = dto.UserId,
+            Amount = dto.Amount,
+            PaymentDate = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        await _paymentRepo.AddAsync(payment);
+        await _paymentRepo.SaveChangesAsync();
+
         return _mapper.Map<PaymentResponseDto>(payment);
     }
 
-    public async Task<IEnumerable<PaymentResponseDto>> GetPaymentsByUser(int userId)
+    public async Task<IEnumerable<PaymentResponseDto>> GetPaymentsByUserAsync(int userId)
     {
-        _ = await _userRepo.GetById(userId)
-            ?? throw new NotFoundException($"User with ID {userId} not found");
-
-        var payments = await _paymentRepo.GetPaymentsByUser(userId);
+        var payments = await _paymentRepo.GetPaymentsByUserAsync(userId);
         return _mapper.Map<IEnumerable<PaymentResponseDto>>(payments);
     }
 }

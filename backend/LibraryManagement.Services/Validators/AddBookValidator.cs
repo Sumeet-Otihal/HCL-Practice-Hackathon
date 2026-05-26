@@ -1,5 +1,5 @@
-﻿using FluentValidation;
-using LibraryManagement.Core.DTOs;
+using FluentValidation;
+using LibraryManagement.Core.DTOs.Book;
 
 namespace LibraryManagement.Services.Validators;
 
@@ -14,14 +14,17 @@ public class AddBookValidator : AbstractValidator<AddBookDto>
         RuleFor(x => x.AuthorName)
             .NotEmpty().WithMessage("Author name is required");
 
+        RuleFor(x => x.PublishedDate)
+            .NotEmpty().WithMessage("Published date is required")
+            .LessThanOrEqualTo(DateTime.UtcNow).WithMessage("Published date cannot be in the future");
+
+        RuleFor(x => x.Volumes)
+            .GreaterThan(0).WithMessage("Volumes must be at least 1");
+
         RuleFor(x => x.Price)
             .GreaterThan(0).WithMessage("Price must be greater than 0");
 
-        RuleFor(x => x.PublishedDate)
-            .LessThanOrEqualTo(DateTime.Today)
-            .WithMessage("Published date cannot be in the future");
-
         RuleFor(x => x.NoOfCopies)
-            .GreaterThanOrEqualTo(1).WithMessage("At least 1 copy is required");
+            .GreaterThan(0).WithMessage("Number of copies must be at least 1");
     }
 }

@@ -1,5 +1,5 @@
-﻿using FluentValidation;
-using LibraryManagement.Core.DTOs;
+using FluentValidation;
+using LibraryManagement.Core.DTOs.User;
 
 namespace LibraryManagement.Services.Validators;
 
