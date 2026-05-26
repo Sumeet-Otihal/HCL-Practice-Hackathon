@@ -10,7 +10,7 @@ using LibraryManagement.Core.Interfaces.Services;
 namespace LibraryManagement.API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/requests")]
     public class RequestController : ControllerBase
     {
         private readonly IRequestService _requestService;

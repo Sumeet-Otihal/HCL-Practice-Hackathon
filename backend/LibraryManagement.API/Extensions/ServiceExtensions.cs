@@ -8,9 +8,9 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using LibraryManagement.Core.Interfaces.Repositories;
 using LibraryManagement.Core.Interfaces.Services;
-using LibraryManagement.API.Stubs.Infrastructure;
-using LibraryManagement.API.Stubs.Infrastructure.Repositories;
-using LibraryManagement.API.Stubs.Services;
+using LibraryManagement.Infrastruture.Data;
+using LibraryManagement.Infrastruture.Repositories;
+using LibraryManagement.Services.Services;
 
 namespace LibraryManagement.API.Extensions
 {
@@ -19,7 +19,7 @@ namespace LibraryManagement.API.Extensions
         public static IServiceCollection AddDatabaseServices(this IServiceCollection services, IConfiguration configuration)
         {
             var connectionString = configuration.GetConnectionString("DefaultConnection");
-            services.AddDbContext<LibraryDbContext>(options =>
+            services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlServer(connectionString));
 
             return services;
@@ -33,18 +33,6 @@ namespace LibraryManagement.API.Extensions
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IPaymentRepository, PaymentRepository>();
             services.AddScoped<IBookRequestRepository, BookRequestRepository>();
-
-            return services;
-        }
-
-        public static IServiceCollection AddApplicationServices(this IServiceCollection services)
-        {
-            services.AddScoped<IBookService, BookService>();
-            services.AddScoped<IBorrowService, BorrowService>();
-            services.AddScoped<IUserService, UserService>();
-            services.AddScoped<IPaymentService, PaymentService>();
-            services.AddScoped<IRequestService, RequestService>();
-            services.AddScoped<IJwtTokenService, JwtTokenService>();
 
             return services;
         }

@@ -10,7 +10,7 @@ using LibraryManagement.Core.Interfaces.Services;
 namespace LibraryManagement.API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/users")]
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -65,9 +65,21 @@ namespace LibraryManagement.API.Controllers
         }
 
         [HttpPut("{id:int}")]
-        [Authorize(Roles = "Librarian")]
+        [Authorize]
         public async Task<ActionResult<UserResponseDto>> Update(int id, [FromBody] UpdateUserDto updateUserDto)
         {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            var roleClaim = User.FindFirst(ClaimTypes.Role);
+
+            if (userIdClaim == null || roleClaim == null)
+                throw new UnauthorizedException("Unauthorized access.");
+
+            var currentUserId = int.Parse(userIdClaim.Value);
+            var isLibrarian = roleClaim.Value == "Librarian";
+
+            if (!isLibrarian && currentUserId != id)
+                throw new UnauthorizedException("You are not authorized to update another user's profile.");
+
             var response = await _userService.UpdateUserAsync(id, updateUserDto);
             return Ok(response);
         }

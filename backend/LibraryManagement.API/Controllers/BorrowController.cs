@@ -10,7 +10,7 @@ using LibraryManagement.Core.Interfaces.Services;
 namespace LibraryManagement.API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/borrow")]
     public class BorrowController : ControllerBase
     {
         private readonly IBorrowService _borrowService;
