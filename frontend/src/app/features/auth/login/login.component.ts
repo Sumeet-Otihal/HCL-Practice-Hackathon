@@ -149,6 +149,12 @@ export class LoginComponent {
     password: ['', [Validators.required]]
   });
 
+  ngOnInit(): void {
+    if (this.authService.isLoggedIn()) {
+      this.router.navigate(['/dashboard']);
+    }
+  }
+
   onSubmit(): void {
     if (this.loginForm.valid) {
       this.authService.login(this.loginForm.value as any).subscribe({

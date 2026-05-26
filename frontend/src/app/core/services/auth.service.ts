@@ -66,10 +66,10 @@ export class AuthService {
   private decodeToken(token: string): User {
     const decoded: any = jwtDecode(token);
     return {
-      id: decoded.id || decoded.nameid || decoded.sub,
-      name: decoded.name || decoded.unique_name,
-      email: decoded.email,
-      role: decoded.role,
+      id: decoded.id || decoded.nameid || decoded.sub || decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'],
+      name: decoded.name || decoded.unique_name || decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'],
+      email: decoded.email || decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'],
+      role: decoded.role || decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'],
       isActive: true,
       phoneNo: decoded.phoneNo,
       libraryCardExpiry: decoded.libraryCardExpiry

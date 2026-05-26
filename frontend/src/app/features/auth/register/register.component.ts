@@ -167,6 +167,12 @@ export class RegisterComponent {
     phoneNo: ['', Validators.required]
   });
 
+  ngOnInit(): void {
+    if (this.authService.isLoggedIn()) {
+      this.router.navigate(['/dashboard']);
+    }
+  }
+
   onSubmit(): void {
     if (this.registerForm.valid) {
       this.authService.register(this.registerForm.value as any).subscribe({

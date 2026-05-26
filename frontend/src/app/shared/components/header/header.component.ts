@@ -17,10 +17,11 @@ import { AuthService } from '../../../core/services/auth.service';
         </div>
 
         <nav class="desktop-nav" *ngIf="authService.currentUser$ | async as user; else guestNav">
+          <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Home</a>
+          <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
           <a routerLink="/books" routerLinkActive="active">Books</a>
           
           <ng-container *ngIf="user.role === 'Librarian'">
-            <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
             <a routerLink="/borrow" routerLinkActive="active">Borrow</a>
             <a routerLink="/users" routerLinkActive="active">Users</a>
             <a routerLink="/payments" routerLinkActive="active">Payments</a>
@@ -28,7 +29,6 @@ import { AuthService } from '../../../core/services/auth.service';
           </ng-container>
           
           <ng-container *ngIf="user.role === 'Reader'">
-            <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
             <a routerLink="/my-borrows" routerLinkActive="active">My Borrows</a>
             <a routerLink="/my-requests" routerLinkActive="active">My Requests</a>
           </ng-container>
@@ -41,6 +41,7 @@ import { AuthService } from '../../../core/services/auth.service';
 
         <ng-template #guestNav>
           <nav class="desktop-nav">
+            <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Home</a>
             <a routerLink="/books" routerLinkActive="active">Books</a>
             <a routerLink="/login" routerLinkActive="active">Login</a>
             <a routerLink="/register" routerLinkActive="active">Register</a>
@@ -55,8 +56,9 @@ import { AuthService } from '../../../core/services/auth.service';
       <!-- Mobile Nav -->
       <div class="mobile-nav" [class.open]="isMobileMenuOpen" (click)="toggleMobileMenu()">
         <nav *ngIf="authService.currentUser$ | async as user; else guestMobileNav">
+          <a routerLink="/">Home</a>
+          <a routerLink="/dashboard">Dashboard</a>
           <a routerLink="/books">Books</a>
-          <a routerLink="/dashboard" *ngIf="user.role === 'Librarian' || user.role === 'Reader'">Dashboard</a>
           <a routerLink="/borrow" *ngIf="user.role === 'Librarian'">Borrow</a>
           <a routerLink="/users" *ngIf="user.role === 'Librarian'">Users</a>
           <a routerLink="/payments" *ngIf="user.role === 'Librarian'">Payments</a>
@@ -67,6 +69,7 @@ import { AuthService } from '../../../core/services/auth.service';
         </nav>
         <ng-template #guestMobileNav>
           <nav>
+            <a routerLink="/">Home</a>
             <a routerLink="/books">Books</a>
             <a routerLink="/login">Login</a>
             <a routerLink="/register">Register</a>

@@ -26,4 +26,8 @@ export class UserService {
   getExpiringSoon(): Observable<User[]> {
     return this.http.get<User[]>(`${this.apiUrl}/expiring-soon`);
   }
+
+  update(id: number, dto: any): Observable<User> {
+    return this.http.put<User>(`${this.apiUrl}/${id}`, dto);
+  }
 }

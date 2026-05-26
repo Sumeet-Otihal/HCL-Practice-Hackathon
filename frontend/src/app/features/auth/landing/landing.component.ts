@@ -1,8 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-landing',
@@ -18,7 +19,12 @@ import { MatIconModule } from '@angular/material/icon';
           <p class="subtitle">A clean, simple system for managing your library — borrowing, tracking, and requesting, all in one place.</p>
           <div class="hero-actions">
             <button mat-stroked-button routerLink="/books" class="large-btn secondary">Browse Books</button>
-            <button mat-flat-button color="primary" routerLink="/login" class="large-btn">Sign In</button>
+            <ng-container *ngIf="!authService.isLoggedIn(); else loggedInHero">
+              <button mat-flat-button color="primary" routerLink="/login" class="large-btn">Sign In</button>
+            </ng-container>
+            <ng-template #loggedInHero>
+              <button mat-flat-button color="primary" routerLink="/dashboard" class="large-btn">Go to Dashboard</button>
+            </ng-template>
           </div>
         </div>
         <div class="bottom-divider"></div>
@@ -58,10 +64,19 @@ import { MatIconModule } from '@angular/material/icon';
         <div class="cta-container">
           <h2>Ready to get started?</h2>
           <p>Join thousands of readers and start your journey today.</p>
-          <div class="cta-actions">
-            <button mat-flat-button color="primary" routerLink="/register" class="large-btn">Create an account</button>
-          </div>
-          <p class="muted">Already have an account? <a routerLink="/login">Sign in</a></p>
+          
+          <ng-container *ngIf="!authService.isLoggedIn(); else loggedInCta">
+            <div class="cta-actions">
+              <button mat-flat-button color="primary" routerLink="/register" class="large-btn">Create an account</button>
+            </div>
+            <p class="muted">Already have an account? <a routerLink="/login">Sign in</a></p>
+          </ng-container>
+          
+          <ng-template #loggedInCta>
+            <div class="cta-actions">
+              <button mat-flat-button color="primary" routerLink="/dashboard" class="large-btn">Go to My Dashboard</button>
+            </div>
+          </ng-template>
         </div>
       </section>
     </div>
@@ -266,4 +281,6 @@ import { MatIconModule } from '@angular/material/icon';
     }
   `]
 })
-export class LandingComponent {}
+export class LandingComponent {
+  authService = inject(AuthService);
+}

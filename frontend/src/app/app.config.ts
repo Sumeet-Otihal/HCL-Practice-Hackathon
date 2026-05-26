@@ -1,4 +1,4 @@
-import { ApplicationConfig, importProvidersFrom } from '@angular/core';
+import { ApplicationConfig, importProvidersFrom, DEFAULT_CURRENCY_CODE } from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 
 import { routes } from './app.routes';
@@ -12,6 +12,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes, withComponentInputBinding()),
     provideAnimationsAsync(),
     provideHttpClient(withInterceptors([authInterceptor])),
-    importProvidersFrom(MatNativeDateModule)
+    importProvidersFrom(MatNativeDateModule),
+    { provide: DEFAULT_CURRENCY_CODE, useValue: 'INR' }
   ]
 };
